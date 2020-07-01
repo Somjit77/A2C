@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"  # Suppress Tensorflow Messages
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CPU/GPU
 
 
 def running_mean(x, n):
@@ -32,26 +34,39 @@ def plot_reward(index, n):
 
 def plot_losses(index):
     env_name, file_name = get_file(index)
-    f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8))
+    f, axs = plt.subplots(2, 2, figsize=(8, 8))
+    ax1 = axs[0, 0]
+    ax2 = axs[0, 1]
+    ax3 = axs[1, 0]
+    ax4 = axs[1, 1]
     ax1.set_title('Policy Loss')
     ax2.set_title('Value Loss')
-    ax3.set_title('Reconstruction Loss')
+    ax3.set_title('Next State & Reward Loss')
+    ax4.set_title('Model Value Loss')
     ax1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     ax3.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    ax4.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     f.tight_layout(pad=3.0)
     # Loss has 2 components organized as: Total, Policy, Value
-    loss = np.load(file_name + '/loss.npy')
-    reconstruction_loss = loss[:, 0]
-    policy_loss = loss[:, 1]
-    value_loss = loss[:, 2]
+    losses = np.load(file_name + '/loss.npy', allow_pickle=True)[()]
+    loss = np.array(losses['loss'])
+    model_loss = losses['model_loss']
+    next_state_loss = loss[:, 0]
+    reward_loss = loss[:, 1]
+    policy_loss = loss[:, 2]
+    value_loss = loss[:, 3]
     plt.xlabel('Updates')
     ax1.set_ylabel('Loss')
     ax2.set_ylabel('Loss')
     ax3.set_ylabel('Loss')
+    ax4.set_ylabel('Loss')
     ax1.plot(policy_loss, label='Policy Loss')
     ax2.plot(value_loss, label='Value Loss')
-    ax3.plot(reconstruction_loss, label='Reconstruction Loss')
+    ax3.plot(next_state_loss, label='Next State Loss')
+    ax3.plot(reward_loss, label='Reward Loss')
+    ax4.plot(model_loss, label='Model Loss')
+    ax3.legend()
     plt.savefig(file_name + '/loss.pdf')
     plt.show()
 
@@ -83,9 +98,9 @@ def compare_algorithms(indices, label, n):
 
 
 if __name__ == "__main__":
-    # plot_reward(-2, 10)
-    # plot_losses(-1)
+    # plot_reward(-1, 10)
+    plot_losses(-1)
     compare_indices = [-1, -2]
     labels = [str(i) for i in compare_indices]
-    labels = ['With Rep', 'Without Rep']
-    compare_algorithms(compare_indices, labels, 50)
+    # labels = ['With Rep', 'Without Rep']
+    # compare_algorithms(compare_indices, labels, 10)
