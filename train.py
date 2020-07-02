@@ -39,7 +39,7 @@ model_params = {'use_model': 1,  # Using Models
                 'model_critic_learning_rate': 1e-5,  # learning rate for critic in model-based rollouts
                 'buffer_size': 10000,
                 'planning_steps': 10,
-                'rollouts': 10,
+                'rollouts': 1,
                 }
 
 '''Parameters of Model'''
